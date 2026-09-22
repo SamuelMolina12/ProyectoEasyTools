@@ -1,135 +1,181 @@
-Estoy continuando un proyecto existente llamado **EasyTool**. NO quiero que lo rehagas desde cero.
+Estoy continuando un proyecto existente llamado **EasyTool**. No quiero empezar desde cero ni reconstruirlo.
 
-Primero revisa todos los archivos que te voy a proporcionar: **PDF, HTML, resumen de avances, historias de usuario y código actual de Frontend/Backend**. Usa la documentación para entender qué debe tener el proyecto.
+Primero necesito que entiendas completamente el proyecto antes de modificar código.
 
-### Arquitectura actual
+Voy a proporcionarte los archivos que ya tengo, principalmente:
 
-**Frontend:** React Native + Expo + TypeScript + NativeWind + React Navigation.
+* PDF con los requerimientos.
+* HTML/documentación.
+* Resumen de avances que otra IA fue construyendo.
+* Historias de usuario.
+* Frontend.
+* Backend.
+* Archivos relacionados con la base de datos.
 
-**Backend:** Python + FastAPI + SQLAlchemy + Alembic + JWT + hash de contraseñas.
+## Arquitectura definida
 
-**Base de datos:** Microsoft SQL Server.
+El proyecto utiliza:
 
-Flujo esperado:
+**Frontend**
 
-**React Native → FastAPI → SQLAlchemy/Alembic → SQL Server**
+* React Native
+* Expo
+* TypeScript
+* NativeWind
+* React Navigation
 
-El sistema es multi-negocio:
+**Backend**
 
-**Negocio → Usuarios / Productos / Inventario / Clientes / Ventas**
+* Python
+* FastAPI
+* SQLAlchemy
+* Alembic
+* JWT
+* Hash seguro de contraseñas
+* Pandas para análisis cuando sea necesario
 
----
+**Base de datos**
 
-### Problema actual
+* Microsoft SQL Server
 
-El Frontend parece estar funcionando principalmente con **datos quemados/mock** y sospecho que **no está consumiendo realmente el Backend**.
+La arquitectura esperada es:
 
-Hay cosas como:
+Frontend → REST/JSON → FastAPI → SQLAlchemy/Alembic → SQL Server
+
+## Problema actual
+
+El Frontend visualmente está bastante avanzado, pero sospecho que **no está realmente conectado al Backend**.
+
+Actualmente existen datos quemados/mock, por ejemplo:
 
 * productos ficticios;
 * usuarios ficticios;
-* stock quemado;
-* login que posiblemente no verifica realmente contra la BD;
-* validaciones hechas solamente en Frontend;
-* endpoints faltantes o no conectados.
+* información de stock;
+* posiblemente ventas/clientes;
+* validaciones realizadas solamente en Frontend.
 
-Quiero que revises y compruebes realmente la conexión:
+Quiero que revises si realmente existe comunicación:
 
-**Frontend ↔ Backend ↔ SQL Server**
+**Frontend → Backend → SQL Server**
 
-No asumas que algo funciona solo porque existe un endpoint o un archivo.
+y que no asumamos que está conectado simplemente porque existen archivos o endpoints.
 
----
+## Objetivo
 
-### Objetivo
+Quiero terminar correctamente **SOLO el Sprint 1**.
 
-Terminar correctamente **SOLO el Sprint 1**.
-
-Revisa especialmente:
+Debes revisar las historias de usuario y determinar qué corresponde al Sprint 1, especialmente:
 
 * Login.
-* Registro de usuarios.
+* Registro.
+* Usuarios.
 * Negocios.
 * Crear productos.
 * Listar productos.
 * Stock/inventario necesario.
-* Validaciones y seguridad.
-* Endpoints necesarios.
-* Conexión real con SQL Server.
-* Separación de información mediante `negocio_id`.
+* Arquitectura y base de datos.
+* Validaciones y seguridad correspondientes al Sprint 1.
 
-El login y registro deben validarse realmente en Backend y SQL Server, utilizando JWT y contraseñas con hash.
+Quiero que las funcionalidades trabajen con **datos reales de SQL Server**, no con información quemada en el Frontend.
 
-Los productos y stock deben venir de la base de datos, **no de datos quemados en React Native**.
+Las validaciones importantes deben estar en el Backend, no solamente en React Native.
 
-El Frontend debe consumir los endpoints reales.
+Por ejemplo, el login debe realmente consultar el usuario en SQL Server, verificar su contraseña, validar su estado y generar JWT.
 
----
+El registro debe realmente crear el usuario en la base de datos.
 
-### Clientes
+Los productos deben guardarse y consultarse desde SQL Server.
 
-**NO quiero crear todavía un módulo/pantalla de clientes en el Sprint 1.**
+El stock mostrado debe corresponder a datos reales.
 
-Pero sí quiero que revises/crees la tabla `clientes` y su relación con `negocio` y `ventas`, porque las ventas futuras necesitarán saber qué cliente compró.
+## Negocios
 
-Yo agregaré los clientes manualmente a la BD por ahora.
+El sistema es multi-negocio.
 
----
+La estructura debe permitir:
 
-### Qué debes hacer primero
+Negocio → Usuarios
+Negocio → Productos
+Negocio → Inventario
+Negocio → Clientes
+Negocio → Ventas
 
-**NO empieces modificando todo.**
+Los datos de un negocio no deben mezclarse con los de otro.
 
-Primero analiza el proyecto y entrégame un diagnóstico con:
+## Clientes
 
-1. Qué está funcionando.
-2. Qué está incompleto.
-3. Qué está mal.
-4. Qué datos están quemados.
-5. Qué endpoints existen.
-6. Qué endpoints faltan del Sprint 1.
-7. Qué problemas hay entre Frontend → Backend → SQL Server.
-8. Qué falta en la base de datos.
-9. Qué falta para terminar Sprint 1.
-10. Orden recomendado para corregirlo.
+IMPORTANTE:
 
-Después iremos corrigiendo paso a paso.
+**Clientes NO es un módulo que quiero desarrollar visualmente en el Sprint 1.**
 
----
+Pero sí necesito que exista la estructura de base de datos `clientes` y que quede preparada la relación con `ventas`, porque posteriormente necesito análisis como clientes que más compran, historial de compras, género, etc.
 
-### Documentación
+Yo agregaré los clientes manualmente a la base de datos por ahora.
 
-Tengo un **resumen de avances** que la IA anterior fue llenando.
+No desarrolles todavía una pantalla/CRUD de clientes.
 
-No lo pierdas.
+## Qué quiero que hagas AHORA
 
-Cada cambio que hagamos debe quedar documentado en ese resumen, incluyendo:
+NO modifiques todavía todo el proyecto.
+
+Primero:
+
+1. Lee el PDF.
+2. Lee el HTML.
+3. Lee el resumen.
+4. Revisa las historias de usuario.
+5. Analiza la estructura del Frontend.
+6. Analiza la estructura del Backend.
+7. Analiza la conexión con SQL Server.
+8. Revisa modelos, schemas, servicios, routers y endpoints.
+9. Detecta datos quemados.
+10. Detecta funcionalidades faltantes.
+11. Comprueba qué partes realmente están conectadas.
+
+Después entrégame un diagnóstico dividido en:
+
+* Qué está bien.
+* Qué está incompleto.
+* Qué está mal.
+* Qué está quemado/mock.
+* Qué no está conectado.
+* Qué endpoints faltan.
+* Qué falta en la base de datos.
+* Qué falta del Sprint 1.
+* Qué debemos corregir primero.
+
+NO avances todavía a los Sprints 2, 3, 4 o 5.
+
+Tampoco reconstruyas el proyecto.
+
+Primero quiero el diagnóstico y luego iremos corrigiendo paso a paso.
+
+Además, el documento/resumen existente debe conservarse y posteriormente actualizarse con cada cambio realizado.
+
+Al final de todo el proceso también quiero que el resumen documente:
 
 * arquitectura;
 * tecnologías;
-* cambios realizados;
-* endpoints;
+* Frontend;
+* Backend;
+* SQL Server;
 * modelos;
-* migraciones;
+* endpoints;
 * conexiones;
+* migraciones;
+* cambios realizados;
 * pruebas;
 * pendientes.
 
-También deja documentados los comandos para iniciar:
+Y documenta también los comandos para iniciar:
 
-**Backend**
+Backend:
+`venv\Scripts\activate`
+`uvicorn app.main:app --reload`
 
-```bash
-venv\Scripts\activate
-uvicorn app.main:app --reload
-```
+Frontend:
+`npx expo start`
 
-**Frontend**
+La prioridad absoluta ahora es:
 
-```bash
-npx expo start
-```
-
-La prioridad es:
-
-**que Frontend, Backend y SQL Server estén realmente conectados y que el Sprint 1 funcione con datos reales, no mock.**
+**VERIFICAR Y CORREGIR LA CONEXIÓN REAL ENTRE FRONTEND + BACKEND + SQL SERVER Y TERMINAR CORRECTAMENTE EL SPRINT 1.**
