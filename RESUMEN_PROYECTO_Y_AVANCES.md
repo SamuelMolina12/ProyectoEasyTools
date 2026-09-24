@@ -105,11 +105,18 @@ La entidad raíz del ecosistema es **`negocios`**:
    ```
    > ℹ️ **¿Qué hace esto?** Lee el archivo `requirements.txt` e instala todos los paquetes necesarios de Python (como `fastapi`, `sqlalchemy`, `pyodbc`, etc.) en sus versiones exactas dentro de tu entorno virtual, sin afectar tu instalación global de Python.
 
-5. Configurar la base de datos:
-   - Asegúrate de tener SQL Server ejecutándose localmente.
-   - Crea una base de datos vacía llamada `EasyToolDB`.
-   - Verifica el archivo `Backend/app/core/config.py` para asegurar que el string de conexión `DATABASE_URL` coincide con la configuración de tu instancia local.
-6. Ejecutar el servidor de desarrollo:
+5. Configuración de Variables de Entorno (`.env`):
+   El proyecto usa un archivo `.env` que **no se sube a GitHub** por seguridad (está ignorado en el `.gitignore`). Para configurarlo:
+   - En la carpeta `Backend`, busca el archivo llamado `.env.example`.
+   - Cópialo y renómbralo a `.env`.
+   - Si tu conexión a SQL Server requiere usuario/contraseña o tu instancia no se llama `localhost`, ajústalo en la variable `DATABASE_URL` dentro del `.env`.
+
+6. Crear la Base de Datos:
+   - Abre SQL Server Management Studio (SSMS) o Azure Data Studio.
+   - Ejecuta el script provisto en `Backend/setup_db.sql` (básicamente hace un `CREATE DATABASE EasyToolDB;`).
+   - *(Ojo: Sólo debes crear la BD vacía. ¡NO necesitas crear las tablas manualmente!)*
+
+7. Ejecutar el servidor de desarrollo:
    ```bash
    uvicorn app.main:app --reload
    ```
