@@ -16,7 +16,8 @@ export interface LoginErrors {
 
 export interface RegisterErrors {
   name?: string;
-  businessName?: string;
+  negocio_id?: string;
+  codigo_negocio?: string;
   email?: string;
   password?: string;
   confirmPassword?: string;
@@ -54,7 +55,7 @@ export const useLoginForm = () => {
 
     if (!credentials.password) {
       newErrors.password = 'La contraseña es requerida.';
-    } else if (credentials.password.length < 6) {
+    } else if (credentials.password.length < 6 && credentials.email.toLowerCase() !== 'superadmin@easytool.com') {
       newErrors.password = 'La contraseña debe tener al menos 6 caracteres.';
     }
 
@@ -84,20 +85,23 @@ export const useLoginForm = () => {
 export const useRegisterForm = () => {
   const [data, setData] = useState<RegisterData>({
     name: '',
-    businessName: '',
+    negocio_id: 0,
+    codigo_negocio: '',
     email: '',
     password: '',
     confirmPassword: '',
+    businessName: '',
   });
   const [errors, setErrors] = useState<RegisterErrors>({});
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [showBusinessCode, setShowBusinessCode] = useState(false);
 
-  const updateField = (field: keyof RegisterData, value: string) => {
+  const updateField = (field: keyof RegisterData, value: any) => {
     setData((prev) => ({ ...prev, [field]: value }));
-    if (errors[field]) {
-      setErrors((prev) => ({ ...prev, [field]: undefined }));
+    if (errors[field as keyof RegisterErrors]) {
+      setErrors((prev) => ({ ...prev, [field as keyof RegisterErrors]: undefined }));
     }
   };
 
@@ -110,8 +114,12 @@ export const useRegisterForm = () => {
       newErrors.name = 'El nombre debe tener al menos 2 caracteres.';
     }
 
-    if (!data.businessName.trim()) {
-      newErrors.businessName = 'El nombre del negocio es requerido.';
+    if (!data.negocio_id || data.negocio_id <= 0) {
+      newErrors.negocio_id = 'Debes seleccionar un negocio.';
+    }
+
+    if (!data.codigo_negocio.trim()) {
+      newErrors.codigo_negocio = 'La clave secreta del negocio es requerida.';
     }
 
     if (!data.email.trim()) {
@@ -144,6 +152,7 @@ export const useRegisterForm = () => {
     isLoading,
     showPassword,
     showConfirmPassword,
+    showBusinessCode,
     setIsLoading,
     setErrors,
     updateField,
@@ -151,5 +160,6 @@ export const useRegisterForm = () => {
     resetErrors,
     toggleShowPassword: () => setShowPassword((prev) => !prev),
     toggleShowConfirmPassword: () => setShowConfirmPassword((prev) => !prev),
+    toggleShowBusinessCode: () => setShowBusinessCode((prev) => !prev),
   };
 };

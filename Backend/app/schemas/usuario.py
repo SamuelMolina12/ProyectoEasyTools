@@ -4,7 +4,7 @@ from datetime import datetime
 
 class UsuarioPublic(BaseModel):
     id: int
-    negocio_id: int
+    negocio_id: Optional[int] = None   # None para SuperAdmin
     nombre: str
     correo: str
     rol: str

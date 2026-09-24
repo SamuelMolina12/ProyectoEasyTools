@@ -17,8 +17,8 @@ export type AuthStackParamList = {
 const Stack = createNativeStackNavigator<AuthStackParamList>();
 
 interface AuthNavigatorProps {
-  onLoginSuccess: () => void;
-  onRegisterSuccess: () => void;
+  onLoginSuccess?: () => void;
+  onRegisterSuccess?: () => void;
 }
 
 export const AuthNavigator: React.FC<AuthNavigatorProps> = ({

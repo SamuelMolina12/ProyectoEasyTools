@@ -21,5 +21,6 @@ class Negocio(Base):
     # Relaciones
     usuarios = relationship("Usuario", back_populates="negocio", cascade="all, delete-orphan")
     productos = relationship("Producto", back_populates="negocio", cascade="all, delete-orphan")
+    clientes = relationship("Cliente", back_populates="negocio", cascade="all, delete-orphan")
     ventas = relationship("Venta", back_populates="negocio", cascade="all, delete-orphan")
     movimientos_inventario = relationship("MovimientoInventario", back_populates="negocio", cascade="all, delete-orphan")

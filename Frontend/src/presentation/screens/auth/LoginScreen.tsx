@@ -1,6 +1,6 @@
 /**
  * Screen: LoginScreen
- * Pantalla de inicio de sesión — Sprint 1
+ * Pantalla de inicio de sesión conectada al backend real — Sprint 1
  */
 
 import React, { useRef } from 'react';
@@ -21,7 +21,7 @@ import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
 import { Logo } from '../../components/ui/Logo';
 import { useLoginForm } from '../../../application/auth/useAuthForm';
-import { mockLogin } from '../../../infrastructure/services/authService.mock';
+import { useAuth } from '../../../application/auth/AuthContext';
 import { AuthStackParamList } from '../../navigation/AuthNavigator';
 
 type LoginScreenProps = {
@@ -33,6 +33,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
   navigation,
   onLoginSuccess,
 }) => {
+  const { login } = useAuth();
   const {
     credentials,
     errors,
@@ -69,11 +70,12 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
 
     setIsLoading(true);
     try {
-      await mockLogin(credentials);
-      // En Sprint 2+: guardar token, actualizar estado global
+      await login(credentials);
       onLoginSuccess?.();
     } catch (err: any) {
-      setErrors({ general: err.message });
+      setErrors({
+        general: err.message || 'Credenciales inválidas. Por favor intenta de nuevo.',
+      });
     } finally {
       setIsLoading(false);
     }
@@ -321,12 +323,6 @@ const styles = StyleSheet.create({
     color: '#00c9a7',
     fontSize: 14,
     fontWeight: '700',
-  },
-  footer: {
-    textAlign: 'center',
-    color: '#94a3b8',
-    fontSize: 11,
-    fontWeight: '400',
   },
 });
 

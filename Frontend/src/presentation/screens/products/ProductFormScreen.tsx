@@ -1,6 +1,6 @@
 /**
  * Screen: ProductFormScreen — HU-05
- * Formulario para registrar un nuevo producto.
+ * Formulario para registrar un nuevo producto conectado a la API real.
  */
 
 import React, { useRef, useState } from 'react';
@@ -22,7 +22,7 @@ import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
 import { Card } from '../../components/ui/Card';
 import { useProductForm } from '../../../application/products/useProductForm';
-import { mockCreateProduct } from '../../../infrastructure/services/productService.mock';
+import { productService } from '../../../infrastructure/services/productService';
 import {
   PRODUCT_CATEGORIES,
   ProductCategory,
@@ -78,10 +78,12 @@ export const ProductFormScreen: React.FC<ProductFormScreenProps> = ({
 
     setIsLoading(true);
     try {
-      await mockCreateProduct(data);
+      await productService.createProduct(data);
       setShowSuccess(true);
     } catch (err: any) {
-      setErrors({ general: err.message });
+      setErrors({
+        general: err.message || 'Error al guardar el producto en el servidor.',
+      });
     } finally {
       setIsLoading(false);
     }
@@ -298,7 +300,7 @@ export const ProductFormScreen: React.FC<ProductFormScreenProps> = ({
             <Text style={styles.successTitle}>¡Producto guardado!</Text>
             <Text style={styles.successSubtitle}>
               <Text style={styles.successName}>{data.name}</Text> fue agregado
-              correctamente al catálogo.
+              correctamente al catálogo del negocio.
             </Text>
             <View style={styles.successButton}>
               <Button
@@ -452,7 +454,6 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   cancelBtn: {},
-  // Modal de categoría
   modalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.45)',
@@ -509,7 +510,6 @@ const styles = StyleSheet.create({
     color: '#00c9a7',
     fontWeight: '800',
   },
-  // Modal de éxito
   successOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.5)',

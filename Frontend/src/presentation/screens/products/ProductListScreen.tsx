@@ -1,6 +1,6 @@
 /**
  * Screen: ProductListScreen — HU-06
- * Catálogo de productos con búsqueda, filtro por categoría y paginación.
+ * Catálogo de productos con búsqueda, filtro por categoría y paginación conectado a la API real.
  */
 
 import React, { useCallback, useEffect, useRef, useState } from 'react';
@@ -21,9 +21,7 @@ import { useFocusEffect } from '@react-navigation/native';
 import { ProductCard } from '../../components/products/ProductCard';
 import { Button } from '../../components/ui/Button';
 import { Product, PRODUCT_CATEGORIES, ProductCategory } from '../../../domain/entities/Product';
-import {
-  mockGetProducts,
-} from '../../../infrastructure/services/productService.mock';
+import { productService } from '../../../infrastructure/services/productService';
 import { ProductsStackParamList } from '../../navigation/ProductsNavigator';
 
 type ProductListScreenProps = {
@@ -43,6 +41,7 @@ export const ProductListScreen: React.FC<ProductListScreenProps> = ({
   const [total, setTotal] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const searchTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const headerAnim = useRef(new Animated.Value(0)).current;
@@ -55,27 +54,33 @@ export const ProductListScreen: React.FC<ProductListScreenProps> = ({
     }).start();
   }, []);
 
-  // Recarga al enfocar la pantalla (después de crear un producto)
+  // Recarga al enfocar la pantalla (por ejemplo, después de crear un producto)
   useFocusEffect(
     useCallback(() => {
       loadProducts(1, search, selectedCategory, true);
-    }, []),
+    }, [search, selectedCategory])
   );
 
   const loadProducts = async (
     pageNum: number,
     searchQuery: string,
     category: ProductCategory | 'all',
-    reset: boolean = false,
+    reset: boolean = false
   ) => {
     if (pageNum === 1) {
       setIsLoading(true);
+      setErrorMessage(null);
     } else {
       setIsLoadingMore(true);
     }
 
     try {
-      const result = await mockGetProducts(pageNum, PAGE_SIZE, searchQuery, category);
+      const result = await productService.getProducts(
+        pageNum,
+        PAGE_SIZE,
+        searchQuery,
+        category === 'all' ? undefined : category
+      );
       setTotal(result.total);
       setTotalPages(result.pages);
       setPage(pageNum);
@@ -85,8 +90,8 @@ export const ProductListScreen: React.FC<ProductListScreenProps> = ({
       } else {
         setProducts((prev) => [...prev, ...result.products]);
       }
-    } catch {
-      // Manejar error en sprints futuros
+    } catch (err: any) {
+      setErrorMessage(err.message || 'Error al conectar con el servidor.');
     } finally {
       setIsLoading(false);
       setIsLoadingMore(false);
@@ -187,6 +192,16 @@ export const ProductListScreen: React.FC<ProductListScreenProps> = ({
         </Animated.ScrollView>
       </Animated.View>
 
+      {/* Error banner si falló la carga */}
+      {errorMessage && (
+        <View style={styles.errorBanner}>
+          <Text style={styles.errorBannerText}>⚠ {errorMessage}</Text>
+          <Pressable onPress={() => loadProducts(1, search, selectedCategory, true)}>
+            <Text style={styles.retryText}>Reintentar</Text>
+          </Pressable>
+        </View>
+      )}
+
       {/* Lista de productos */}
       {isLoading ? (
         <View style={styles.loadingContainer}>
@@ -220,7 +235,7 @@ export const ProductListScreen: React.FC<ProductListScreenProps> = ({
       ) : (
         <FlatList
           data={products}
-          keyExtractor={(item) => item.id}
+          keyExtractor={(item) => String(item.id)}
           contentContainerStyle={styles.listContent}
           showsVerticalScrollIndicator={false}
           renderItem={({ item, index }) => (
@@ -337,6 +352,30 @@ const styles = StyleSheet.create({
   },
   filterTextActive: {
     color: '#ffffff',
+  },
+  errorBanner: {
+    marginHorizontal: 20,
+    marginBottom: 10,
+    backgroundColor: '#fde8f2',
+    borderRadius: 12,
+    padding: 12,
+    borderLeftWidth: 4,
+    borderLeftColor: '#e84393',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  errorBannerText: {
+    color: '#c0246e',
+    fontSize: 13,
+    fontWeight: '600',
+    flex: 1,
+  },
+  retryText: {
+    color: '#00c9a7',
+    fontWeight: '700',
+    fontSize: 13,
+    marginLeft: 8,
   },
   listContent: {
     paddingHorizontal: 20,

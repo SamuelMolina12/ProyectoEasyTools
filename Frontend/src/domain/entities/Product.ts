@@ -27,17 +27,18 @@ export const PRODUCT_CATEGORIES: { label: string; value: ProductCategory }[] = [
   { label: 'Otro', value: 'otro' },
 ];
 
-// === Entidad principal de producto ===
+// === Entidad principal de producto (Frontend) ===
 export interface Product {
   id: string;
   name: string;
   price: number;           // Precio unitario en COP
-  category: ProductCategory;
+  category: ProductCategory | string;
   stock: number;           // Unidades disponibles
+  minStock?: number;       // Stock mínimo
   description?: string;
   isActive: boolean;
   createdAt: string;
-  updatedAt: string;
+  updatedAt?: string;
 }
 
 // === Datos del formulario de creación ===
@@ -46,6 +47,7 @@ export interface CreateProductData {
   price: string;          // String para capturar del input, se convierte a number al guardar
   category: ProductCategory | '';
   stock: string;
+  minStock?: string;
   description: string;
 }
 
@@ -55,6 +57,7 @@ export interface ProductFormErrors {
   price?: string;
   category?: string;
   stock?: string;
+  minStock?: string;
   description?: string;
   general?: string;
 }

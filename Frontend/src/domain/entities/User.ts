@@ -3,14 +3,26 @@
  * Representa los tipos de negocio del dominio de autenticación.
  */
 
+// === Entidad de Negocio ===
+export interface Negocio {
+  id: number;
+  nombre: string;
+  actividad?: string;
+  direccion?: string;
+  dueno?: string;
+  activo: boolean;
+}
+
 // === Entidad principal de usuario ===
 export interface User {
-  id: string;
+  id: number | string;
   name: string;
   businessName: string;
   email: string;
-  role: 'owner' | 'admin' | 'employee';
-  createdAt: string;
+  role: string;
+  activo?: boolean;
+  negocio_id?: number;
+  createdAt?: string;
   avatar?: string;
 }
 
@@ -23,17 +35,19 @@ export interface LoginCredentials {
 // === Datos para el registro ===
 export interface RegisterData {
   name: string;
-  businessName: string;
   email: string;
   password: string;
-  confirmPassword: string;
+  confirmPassword?: string;
+  negocio_id: number;
+  codigo_negocio: string;
+  businessName?: string;
 }
 
-// === Respuesta de autenticación ===
+// === Respuesta de autenticación del backend ===
 export interface AuthResponse {
   user: User;
   token: string;
-  refreshToken: string;
+  refreshToken?: string;
 }
 
 // === Estado de sesión ===

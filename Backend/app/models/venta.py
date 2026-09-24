@@ -9,6 +9,7 @@ class Venta(Base):
     id = Column(Integer, primary_key=True, index=True, autoincrement=True)
     negocio_id = Column(Integer, ForeignKey("negocios.id"), nullable=False, index=True)
     usuario_id = Column(Integer, ForeignKey("usuarios.id"), nullable=False, index=True)
+    cliente_id = Column(Integer, ForeignKey("clientes.id"), nullable=True, index=True)  # Nullable: clientes se agregan manualmente en Sprint 1
     total = Column(Numeric(12, 2), nullable=False)
     estado = Column(String(20), default="completada", nullable=False)  # completada, anulada
     motivo_anulacion = Column(String(255), nullable=True)
@@ -17,6 +18,7 @@ class Venta(Base):
     # Relaciones
     negocio = relationship("Negocio", back_populates="ventas")
     usuario = relationship("Usuario", back_populates="ventas")
+    cliente = relationship("Cliente", back_populates="ventas")
     detalles = relationship("DetalleVenta", back_populates="venta", cascade="all, delete-orphan")
 
 class DetalleVenta(Base):

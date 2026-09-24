@@ -12,7 +12,7 @@ import {
   View,
 } from 'react-native';
 import { Product } from '../../../domain/entities/Product';
-import { formatPrice, isLowStock } from '../../../infrastructure/services/productService.mock';
+import { formatPrice, isLowStock } from '../../../infrastructure/services/productService';
 
 interface ProductCardProps {
   product: Product;

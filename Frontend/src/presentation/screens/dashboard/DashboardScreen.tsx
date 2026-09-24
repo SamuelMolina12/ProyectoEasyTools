@@ -1,9 +1,9 @@
 /**
  * Screen: DashboardScreen
- * Pantalla principal del Dashboard — Sprint 1 (datos mock)
+ * Pantalla principal del Dashboard conectada al usuario real y sesión activa — Sprint 1
  */
 
-import React, { useRef } from 'react';
+import React, { useEffect, useRef, useState, useCallback } from 'react';
 import {
   Animated,
   Pressable,
@@ -13,53 +13,12 @@ import {
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
 
-import { useNavigation } from '@react-navigation/native';
 import { MetricCard } from '../../components/dashboard/MetricCard';
 import { Card } from '../../components/ui/Card';
-
-// Datos mock — serán reemplazados por llamadas a la API en sprints futuros
-const MOCK_USER_NAME = 'Samuel';
-const MOCK_BUSINESS = 'Tienda El Sol';
-
-const MOCK_METRICS = [
-  {
-    title: 'Ventas hoy',
-    value: '$1.240',
-    icon: '💰',
-    trend: 12.5,
-    trendDirection: 'up' as const,
-    accentColor: '#00c9a7',
-    delay: 0,
-  },
-  {
-    title: 'Productos activos',
-    value: '84',
-    icon: '📦',
-    trend: 3.2,
-    trendDirection: 'up' as const,
-    accentColor: '#f39c12',
-    delay: 80,
-  },
-  {
-    title: 'Clientes hoy',
-    value: '23',
-    icon: '👥',
-    trend: -5.1,
-    trendDirection: 'down' as const,
-    accentColor: '#e84393',
-    delay: 160,
-  },
-  {
-    title: 'Ticket promedio',
-    value: '$53,9',
-    icon: '🧾',
-    trend: 8.7,
-    trendDirection: 'up' as const,
-    accentColor: '#3b82f6',
-    delay: 240,
-  },
-];
+import { useAuth } from '../../../application/auth/AuthContext';
+import { apiClient } from '../../../infrastructure/services/apiClient';
 
 const QUICK_ACCESS = [
   { icon: '🛒', label: 'Nueva Venta', color: '#00c9a7', bgColor: '#e6fdf8' },
@@ -67,21 +26,52 @@ const QUICK_ACCESS = [
   { icon: '📊', label: 'Reportes', color: '#3b82f6', bgColor: '#eff6ff' },
   { icon: '👥', label: 'Clientes', color: '#e84393', bgColor: '#fde8f2' },
   { icon: '⚙️', label: 'Ajustes', color: '#64748b', bgColor: '#f1f5f9' },
-  { icon: '💳', label: 'Pagos', color: '#8b5cf6', bgColor: '#f5f3ff' },
+  { icon: '🚪', label: 'Cerrar Sesión', color: '#ef4444', bgColor: '#fee2e2' },
 ];
+
+interface DashboardStats {
+  ventas_hoy: number;
+  cantidad_ventas_hoy: number;
+  total_productos: number;
+  total_clientes: number;
+  productos_bajo_stock: number;
+}
 
 export const DashboardScreen: React.FC = () => {
   const navigation = useNavigation<any>();
+  const { user, logout } = useAuth();
+  const [stats, setStats] = useState<DashboardStats>({
+    ventas_hoy: 0,
+    cantidad_ventas_hoy: 0,
+    total_productos: 0,
+    total_clientes: 0,
+    productos_bajo_stock: 0,
+  });
+
   const headerAnim = useRef(new Animated.Value(0)).current;
   const contentAnim = useRef(new Animated.Value(0)).current;
 
   const handleQuickAction = (label: string) => {
-    if (label === 'Inventario' || label === 'Nueva Venta') {
+    if (label === 'Inventario') {
       navigation.navigate('Productos');
+    } else if (label === 'Nueva Venta') {
+      navigation.navigate('Ventas', { screen: 'NewSale' });
+    } else if (label === 'Clientes') {
+      navigation.navigate('Clientes');
+    } else if (label === 'Cerrar Sesión') {
+      confirmLogout();
     }
   };
 
-  React.useEffect(() => {
+  const confirmLogout = async () => {
+    try {
+      await logout();
+    } catch (e) {
+      console.error('Error al cerrar sesión:', e);
+    }
+  };
+
+  useEffect(() => {
     Animated.stagger(150, [
       Animated.timing(headerAnim, {
         toValue: 1,
@@ -96,6 +86,22 @@ export const DashboardScreen: React.FC = () => {
     ]).start();
   }, []);
 
+  // Recargar estadísticas cada vez que la pantalla obtiene el foco
+  useFocusEffect(
+    useCallback(() => {
+      loadDashboardData();
+    }, [])
+  );
+
+  const loadDashboardData = async () => {
+    try {
+      const data = await apiClient.get<DashboardStats>('/dashboard');
+      setStats(data);
+    } catch {
+      // Ignorar si aún no hay conexión
+    }
+  };
+
   const currentHour = new Date().getHours();
   const greeting =
     currentHour < 12
@@ -103,6 +109,50 @@ export const DashboardScreen: React.FC = () => {
       : currentHour < 18
       ? '☀️ Buenas tardes'
       : '🌙 Buenas noches';
+
+  const userName = user?.name || 'Usuario';
+  const businessName = user?.businessName || 'Mi Negocio';
+
+  const formatCurrency = (v: number) => `$${Number(v).toLocaleString('es-CO')}`;
+
+  const metrics = [
+    {
+      title: 'Ventas hoy',
+      value: formatCurrency(stats.ventas_hoy),
+      icon: '💰',
+      trend: stats.cantidad_ventas_hoy,
+      trendDirection: 'up' as const,
+      accentColor: '#00c9a7',
+      delay: 0,
+    },
+    {
+      title: 'Productos registrados',
+      value: String(stats.total_productos),
+      icon: '📦',
+      trend: stats.total_productos > 0 ? 100 : 0,
+      trendDirection: 'up' as const,
+      accentColor: '#f39c12',
+      delay: 80,
+    },
+    {
+      title: 'Clientes',
+      value: String(stats.total_clientes),
+      icon: '👥',
+      trend: stats.total_clientes > 0 ? 100 : 0,
+      trendDirection: 'up' as const,
+      accentColor: '#e84393',
+      delay: 160,
+    },
+    {
+      title: 'Stock bajo',
+      value: String(stats.productos_bajo_stock),
+      icon: '⚠️',
+      trend: stats.productos_bajo_stock,
+      trendDirection: 'down' as const,
+      accentColor: stats.productos_bajo_stock > 0 ? '#ef4444' : '#3b82f6',
+      delay: 240,
+    },
+  ];
 
   return (
     <SafeAreaView style={styles.safeArea} edges={['top']}>
@@ -114,17 +164,20 @@ export const DashboardScreen: React.FC = () => {
         <Animated.View style={[styles.header, { opacity: headerAnim }]}>
           <View style={styles.headerLeft}>
             <Text style={styles.greeting}>{greeting},</Text>
-            <Text style={styles.userName}>{MOCK_USER_NAME} 👋</Text>
-            <Text style={styles.businessName}>{MOCK_BUSINESS}</Text>
+            <Text style={styles.userName}>{userName} 👋</Text>
+            <Text style={styles.businessName}>🏪 {businessName}</Text>
           </View>
           <View style={styles.headerRight}>
-            <Pressable style={styles.notifButton}>
-              <Text style={styles.notifIcon}>🔔</Text>
-              <View style={styles.notifBadge} />
+            <Pressable
+              style={styles.logoutButton}
+              onPress={confirmLogout}
+              hitSlop={8}
+            >
+              <Text style={styles.logoutIcon}>🚪</Text>
             </Pressable>
             <View style={styles.avatar}>
               <Text style={styles.avatarText}>
-                {MOCK_USER_NAME.charAt(0).toUpperCase()}
+                {userName.charAt(0).toUpperCase()}
               </Text>
             </View>
           </View>
@@ -144,24 +197,20 @@ export const DashboardScreen: React.FC = () => {
           </View>
 
           <View style={styles.metricsGrid}>
-            {MOCK_METRICS.map((metric, index) => (
+            {metrics.map((metric, index) => (
               <MetricCard key={index} {...metric} />
             ))}
           </View>
 
-          {/* === Venta destacada del día === */}
+          {/* === Estado del Sistema === */}
           <Card style={styles.highlightCard} padding={20}>
             <View style={styles.highlightHeader}>
-              <Text style={styles.highlightTitle}>🏆 Meta del día</Text>
-              <Text style={styles.highlightPercent}>62%</Text>
+              <Text style={styles.highlightTitle}>⚡ Estado de sincronización</Text>
+              <Text style={styles.highlightStatus}>Conectado</Text>
             </View>
-            <View style={styles.progressBar}>
-              <View style={styles.progressFill} />
-            </View>
-            <View style={styles.highlightFooter}>
-              <Text style={styles.highlightSub}>$1.240 de $2.000</Text>
-              <Text style={styles.highlightRemaining}>Faltan $760</Text>
-            </View>
+            <Text style={styles.highlightSub}>
+              Conectado al servidor de {businessName}. Catálogo actualizado en tiempo real.
+            </Text>
           </Card>
 
           {/* === Acceso rápido === */}
@@ -183,43 +232,6 @@ export const DashboardScreen: React.FC = () => {
               </Pressable>
             ))}
           </View>
-
-          {/* === Actividad reciente === */}
-          <Text style={styles.sectionTitle2}>Actividad reciente</Text>
-          <Card padding={0} style={styles.activityCard}>
-            {[
-              { icon: '💸', title: 'Venta #0042', desc: 'Cliente: María Gómez', amount: '+$85.000', time: 'Hace 12 min', color: '#00c9a7' },
-              { icon: '📦', title: 'Stock bajo', desc: 'Producto: Café 500g', amount: '8 unid.', time: 'Hace 1h', color: '#f39c12' },
-              { icon: '💸', title: 'Venta #0041', desc: 'Efectivo', amount: '+$32.000', time: 'Hace 2h', color: '#00c9a7' },
-            ].map((item, i) => (
-              <View
-                key={i}
-                style={[
-                  styles.activityItem,
-                  i !== 2 && styles.activityBorder,
-                ]}
-              >
-                <View
-                  style={[
-                    styles.activityIcon,
-                    { backgroundColor: item.color + '1A' },
-                  ]}
-                >
-                  <Text style={{ fontSize: 18 }}>{item.icon}</Text>
-                </View>
-                <View style={styles.activityContent}>
-                  <Text style={styles.activityTitle}>{item.title}</Text>
-                  <Text style={styles.activityDesc}>{item.desc}</Text>
-                </View>
-                <View style={styles.activityRight}>
-                  <Text style={[styles.activityAmount, { color: item.color }]}>
-                    {item.amount}
-                  </Text>
-                  <Text style={styles.activityTime}>{item.time}</Text>
-                </View>
-              </View>
-            ))}
-          </Card>
         </Animated.View>
       </ScrollView>
     </SafeAreaView>
@@ -235,7 +247,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingBottom: 32,
   },
-  // Header
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -261,15 +272,15 @@ const styles = StyleSheet.create({
   businessName: {
     fontSize: 13,
     color: '#00c9a7',
-    fontWeight: '600',
-    marginTop: 2,
+    fontWeight: '700',
+    marginTop: 3,
   },
   headerRight: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
   },
-  notifButton: {
+  logoutButton: {
     width: 42,
     height: 42,
     borderRadius: 14,
@@ -282,19 +293,8 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 3,
   },
-  notifIcon: {
-    fontSize: 20,
-  },
-  notifBadge: {
-    position: 'absolute',
-    top: 8,
-    right: 8,
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: '#e84393',
-    borderWidth: 1.5,
-    borderColor: '#ffffff',
+  logoutIcon: {
+    fontSize: 18,
   },
   avatar: {
     width: 42,
@@ -314,7 +314,6 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     color: '#ffffff',
   },
-  // Section headers
   sectionHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -341,61 +340,39 @@ const styles = StyleSheet.create({
     marginTop: 24,
     letterSpacing: -0.3,
   },
-  // Metrics
   metricsGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: 12,
     marginBottom: 16,
   },
-  // Highlight card
   highlightCard: {
     borderRadius: 20,
     marginBottom: 0,
+    backgroundColor: '#ffffff',
   },
   highlightHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 12,
+    marginBottom: 8,
   },
   highlightTitle: {
     fontSize: 15,
     fontWeight: '700',
     color: '#1a1a2e',
   },
-  highlightPercent: {
-    fontSize: 20,
-    fontWeight: '800',
+  highlightStatus: {
+    fontSize: 13,
+    fontWeight: '700',
     color: '#00c9a7',
-  },
-  progressBar: {
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: '#e2e8f0',
-    marginBottom: 10,
-  },
-  progressFill: {
-    height: '100%',
-    width: '62%',
-    borderRadius: 4,
-    backgroundColor: '#00c9a7',
-  },
-  highlightFooter: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
   },
   highlightSub: {
     fontSize: 13,
     color: '#64748b',
-    fontWeight: '600',
+    fontWeight: '500',
+    lineHeight: 18,
   },
-  highlightRemaining: {
-    fontSize: 13,
-    color: '#f39c12',
-    fontWeight: '700',
-  },
-  // Quick access
   quickGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
@@ -416,60 +393,6 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '700',
     textAlign: 'center',
-  },
-  // Activity
-  activityCard: {
-    borderRadius: 20,
-    backgroundColor: '#ffffff',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.06,
-    shadowRadius: 16,
-    elevation: 3,
-  },
-  activityItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 16,
-    gap: 12,
-  },
-  activityBorder: {
-    borderBottomWidth: 1,
-    borderBottomColor: '#f1f5f9',
-  },
-  activityIcon: {
-    width: 44,
-    height: 44,
-    borderRadius: 14,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  activityContent: {
-    flex: 1,
-  },
-  activityTitle: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: '#1a1a2e',
-    marginBottom: 2,
-  },
-  activityDesc: {
-    fontSize: 12,
-    color: '#64748b',
-    fontWeight: '500',
-  },
-  activityRight: {
-    alignItems: 'flex-end',
-  },
-  activityAmount: {
-    fontSize: 14,
-    fontWeight: '800',
-    marginBottom: 2,
-  },
-  activityTime: {
-    fontSize: 11,
-    color: '#94a3b8',
-    fontWeight: '500',
   },
 });
 

@@ -43,7 +43,7 @@ def seed_initial_negocios(db: Session) -> None:
             codigo_acceso_hash=hash_password("123456"),
             actividad="Tienda de Abarrotes y Víveres",
             direccion="Calle 45 # 12-34",
-            dueno="Samuel Molina",
+            dueno="Marlon andres",
             correo="elsol@easytool.com",
             activo=True,
         )

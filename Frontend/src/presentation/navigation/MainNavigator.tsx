@@ -9,10 +9,14 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Text, View, StyleSheet } from 'react-native';
 import { DashboardScreen } from '../screens/dashboard/DashboardScreen';
 import { ProductsNavigator } from './ProductsNavigator';
+import { SalesNavigator } from './SalesNavigator';
+import { ClientesNavigator } from './ClientesNavigator';
 
 export type MainTabParamList = {
   Dashboard: undefined;
   Productos: undefined;
+  Ventas: undefined;
+  Clientes: undefined;
 };
 
 const Tab = createBottomTabNavigator<MainTabParamList>();
@@ -54,6 +58,24 @@ export const MainNavigator: React.FC = () => {
         options={{
           tabBarIcon: ({ focused }: { focused: boolean }) => (
             <TabIcon emoji="📦" label="Catálogo" focused={focused} />
+          ),
+        }}
+      />
+      <Tab.Screen
+        name="Ventas"
+        component={SalesNavigator}
+        options={{
+          tabBarIcon: ({ focused }: { focused: boolean }) => (
+            <TabIcon emoji="🛒" label="Ventas" focused={focused} />
+          ),
+        }}
+      />
+      <Tab.Screen
+        name="Clientes"
+        component={ClientesNavigator}
+        options={{
+          tabBarIcon: ({ focused }: { focused: boolean }) => (
+            <TabIcon emoji="👥" label="Clientes" focused={focused} />
           ),
         }}
       />
